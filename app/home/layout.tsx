@@ -1,7 +1,11 @@
 import React from "react";
 
-function HomeLayout() {
-  return <div className="w-screen h-screen">HomeLayout</div>;
+interface HomeLayoutProps {
+  children: React.ReactNode;
+}
+
+function HomeLayout({ children }: HomeLayoutProps) {
+  return <div className="w-screen h-screen">{children}</div>;
 }
 
 export default HomeLayout;
