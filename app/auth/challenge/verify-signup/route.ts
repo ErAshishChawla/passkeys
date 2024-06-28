@@ -5,6 +5,7 @@ import { createClient } from "@/utils/supabase/server";
 import { verifyRegistrationResponse } from "@simplewebauthn/server";
 
 export async function POST(req: NextRequest) {
+  console.log("-----------------VERIFY SIGNUP-------------------");
   let status: number = 500;
   let response: { [key: string]: any } = {
     success: false,
@@ -127,9 +128,8 @@ export async function POST(req: NextRequest) {
         counter: registrationInfo.counter,
         backup_eligible: registrationInfo.credentialBackedUp,
         backup_status: registrationInfo.credentialBackedUp,
-        transports: incomingCred.response.transports
-          .map((t: any) => t)
-          .join(","),
+        transports:
+          incomingCred?.response?.transports.map((t: any) => t).join(",") || [],
         last_used: null,
       },
     ]);

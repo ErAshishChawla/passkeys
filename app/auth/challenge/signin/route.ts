@@ -5,80 +5,106 @@ import { createClient } from "@/utils/supabase/server";
 import { generateAuthenticationOptions } from "@simplewebauthn/server";
 
 export async function POST(req: NextRequest) {
-  const supabase = createClient();
+  console.log("-----------------VERIFY SIGNIN-------------------");
+  let response = {
+    success: false,
+    error: "An error occured",
+  };
+  let status = 500;
 
-  // Check if user is logged in
-  const userRes = await supabase.auth.getUser();
+  try {
+    const supabase = createClient();
 
-  if (userRes.error) {
-    return NextResponse.json(
-      {
+    // Check if user is logged in
+    const userRes = await supabase.auth.getUser();
+
+    if (userRes.error) {
+      response = {
         success: false,
         error: userRes.error.message || "Error occured while checking user",
-      },
-      { status: 401 }
-    );
-  }
+      };
+      status = 401;
+      throw new Error();
+    }
 
-  const user = userRes.data.user;
+    const user = userRes.data.user;
 
-  if (!user) {
-    return NextResponse.json(
-      {
+    if (!user) {
+      response = {
         success: false,
         error: "User not found",
-      },
-      { status: 401 }
-    );
-  }
+      };
+      status = 401;
+      throw new Error();
+    }
 
-  // Get all user passkeys
-  const passkeysRes = await supabase
-    .from("passkeys")
-    .select()
-    .eq("internal_user_id", user.id);
+    // Get all user passkeys
+    const passkeysRes = await supabase
+      .from("passkeys")
+      .select()
+      .eq("internal_user_id", user.id);
 
-  if (passkeysRes.error) {
-    return NextResponse.json(
-      {
+    if (passkeysRes.error) {
+      response = {
         success: false,
         error:
           passkeysRes.error.message || "Error occured while fetching passkeys",
-      },
-      { status: 500 }
-    );
-  }
+      };
+      status = 500;
+      throw new Error();
+    }
 
-  const userPasskeys = passkeysRes.data;
+    const userPasskeys = passkeysRes.data;
 
-  // Generate authentication options
-  const options = await generateAuthenticationOptions({
-    rpID: process.env.NEXT_PUBLIC_RP_ID!,
-    // Require users to use a previously-registered authenticator
-    allowCredentials: userPasskeys.map((passkey) => ({
-      id: passkey.cred_id,
-      transports: passkey.transports.split(",") as AuthenticatorTransport[],
-    })),
-  });
+    if (!userPasskeys || userPasskeys.length === 0) {
+      response = {
+        success: false,
+        error: "No passkeys found",
+      };
+      status = 400;
+      throw new Error();
+    }
 
-  const challenge = options.challenge;
+    const allowedCredentials =
+      userPasskeys?.map((passkey) => {
+        return {
+          id: passkey?.cred_id,
+          transports: (passkey?.transports as string)?.split(
+            ","
+          ) as AuthenticatorTransport[],
+        };
+      }) || [];
 
-  // Save challenge to db
-  const insertChallengeRes = await supabase
-    .from("challenges")
-    .insert([{ user_id: user.id, challenge }]);
+    // Generate authentication options
+    const options = await generateAuthenticationOptions({
+      rpID: process.env.NEXT_PUBLIC_RP_ID!,
+      // Require users to use a previously-registered authenticator
+      allowCredentials: allowedCredentials,
+    });
 
-  if (insertChallengeRes.error) {
-    return NextResponse.json(
-      {
+    const challenge = options.challenge;
+
+    // Save challenge to db
+    const insertChallengeRes = await supabase
+      .from("challenges")
+      .insert([{ user_id: user.id, challenge }]);
+
+    if (insertChallengeRes.error) {
+      response = {
         success: false,
         error:
           insertChallengeRes.error.message ||
           "Error occured while adding challenge",
-      },
-      { status: 500 }
-    );
-  }
+      };
+      status = 500;
+      throw new Error();
+    }
 
-  return NextResponse.json({ success: true, options: options });
+    console.log("-----------------SIGNIN CHALLENGE SENT-------------------");
+    return NextResponse.json({ success: true, options: options });
+  } catch (error) {
+    console.error(error);
+    console.log("-----------------SIGNIN CHALLENGE SENT-------------------");
+    return NextResponse.json(response, { status });
+  }
 }

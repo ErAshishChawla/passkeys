@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 
 function HomePage() {
   const onRegisterPassKey = async () => {
+    console.log("--------------On Register Passkey-----------------");
     try {
       const response = await fetch("/auth/challenge/signup", {
         method: "POST",
@@ -57,10 +58,12 @@ function HomePage() {
         );
       }
 
-      console.log("Passkey registered successfully");
-    } catch (error) {
-      console.error(error);
+      alert("Passkey registered successfully");
+    } catch (error: any) {
+      // console.error(error);
+      alert(error?.message || "Error occured while registering passkey");
     }
+    console.log("--------------Completed Register Passkey-----------------");
   };
 
   const onLoginPassKey = async () => {
@@ -111,7 +114,7 @@ function HomePage() {
         );
       }
 
-      console.log("Passkey verified successfully");
+      alert("Passkey verified successfully");
     } catch (error) {
       console.error(error);
     }
