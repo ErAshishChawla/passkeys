@@ -116,11 +116,11 @@ export async function POST(req: NextRequest) {
           transports: passKey.transports.split(","),
         },
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       response = {
         success: false,
-        error: "Error verifying the response",
+        error: error,
       };
       status = 400;
       throw new Error();
