@@ -106,7 +106,11 @@ function HomePage() {
         },
       });
 
+      console.log("verifyCredRes", verifyCredRes);
+
       const verifyCredData = await verifyCredRes.json();
+
+      console.log("verifyCredData", verifyCredData);
 
       if (!verifyCredData?.success) {
         throw new Error(

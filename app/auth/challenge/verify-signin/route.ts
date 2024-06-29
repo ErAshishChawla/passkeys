@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
       verification = await verifyAuthenticationResponse({
         expectedChallenge: challenge,
         expectedOrigin: process.env.NEXT_PUBLIC_ORIGIN!,
-        expectedRPID: process.env.NEXT_PUBLIC_RP_ID!,
+        expectedRPID: "lol",
         response: incomingCred,
         authenticator: {
           credentialID: passKey.cred_id,
@@ -120,7 +120,7 @@ export async function POST(req: NextRequest) {
       console.error(error);
       response = {
         success: false,
-        error: error,
+        error: error.name,
       };
       status = 400;
       throw new Error();
