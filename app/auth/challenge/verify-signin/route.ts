@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
       verification = await verifyAuthenticationResponse({
         expectedChallenge: challenge,
         expectedOrigin: process.env.NEXT_PUBLIC_ORIGIN!,
-        expectedRPID: "lol",
+        expectedRPID: process.env.NEXT_PUBLIC_RP_ID!,
         response: incomingCred,
         authenticator: {
           credentialID: passKey.cred_id,
@@ -151,7 +151,7 @@ export async function POST(req: NextRequest) {
     console.log(
       "-----------------VERIFY SIGNIN POST REQUEST COMPLETED-------------------"
     );
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, verification });
   } catch (error) {
     console.error(error);
     console.log(
