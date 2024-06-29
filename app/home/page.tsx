@@ -10,13 +10,19 @@ import { Button } from "@/components/ui/button";
 
 function HomePage() {
   const onRegisterPassKey = async () => {
-    console.log("--------------On Register Passkey-----------------");
+    console.log(
+      "--------------On Register Passkey function started-----------------"
+    );
     try {
       const response = await fetch("/auth/challenge/signup", {
         method: "POST",
       });
 
+      console.log("Challenge signup response", response);
+
       const data = await response.json();
+
+      console.log("Challenge signup data", data);
 
       if (!data?.success) {
         throw new Error(
@@ -26,11 +32,15 @@ function HomePage() {
 
       const options = data?.options;
 
+      console.log("options", options);
+
       if (!options) {
         throw new Error("No options returned from server");
       }
 
       const credRes = await startRegistration(options);
+
+      console.log("credRes", credRes);
 
       if (!credRes) {
         throw new Error("Error occured while registering passkey");
@@ -41,6 +51,8 @@ function HomePage() {
         options_user: options?.user ? options.user : null,
       };
 
+      console.log("sendCredBody", sendCredBody);
+
       //   Now we need to send the generated public key to the server
       const verifyCredRes = await fetch("/auth/challenge/verify-signup", {
         method: "POST",
@@ -50,7 +62,11 @@ function HomePage() {
         },
       });
 
+      console.log("verifyCredRes", verifyCredRes);
+
       const verifyCredData = await verifyCredRes.json();
+
+      console.log("verifyCredData", verifyCredData);
 
       if (!verifyCredData?.success) {
         throw new Error(
@@ -63,16 +79,25 @@ function HomePage() {
       // console.error(error);
       alert(error?.message || "Error occured while registering passkey");
     }
-    console.log("--------------Completed Register Passkey-----------------");
+    console.log(
+      "--------------On Register Passkey function completed-----------------"
+    );
   };
 
   const onLoginPassKey = async () => {
+    console.log(
+      "--------------On Login Passkey function started-----------------"
+    );
     try {
       const response = await fetch("/auth/challenge/signin", {
         method: "POST",
       });
 
+      console.log("Challenge signin response", response);
+
       const data = await response.json();
+
+      console.log("Challenge signin data", data);
 
       if (!data?.success) {
         throw new Error(
@@ -81,6 +106,7 @@ function HomePage() {
       }
 
       const options = data?.options;
+
       console.log("options", options);
 
       if (!options) {
@@ -89,6 +115,8 @@ function HomePage() {
 
       const credRes = await startAuthentication(options);
 
+      console.log("credRes", credRes);
+
       if (!credRes) {
         throw new Error("Error occured while authenticating passkey");
       }
@@ -96,6 +124,8 @@ function HomePage() {
       const sendCredBody = {
         cred: credRes,
       };
+
+      console.log("sendCredBody", sendCredBody);
 
       // Now we need to send the generated public key to the server
       const verifyCredRes = await fetch("/auth/challenge/verify-signin", {
@@ -122,6 +152,9 @@ function HomePage() {
     } catch (error) {
       console.error(error);
     }
+    console.log(
+      "--------------On Login Passkey function completed-----------------"
+    );
   };
   return (
     <div className="w-screen h-screen flex flex-col items-center justify-center gap-3">

@@ -8,19 +8,24 @@ import type { AuthenticatorTransportFuture } from "@simplewebauthn/types";
 import type { Passkey } from "@/types";
 
 export async function POST() {
+  console.log(
+    "-----------------PASSKEY SIGNUP POST REQUEST STARTED-------------------"
+  );
   let status = 500;
   let response = {
     success: false,
     error: "Internal server error",
   };
   try {
-    console.log("-----------------PASSKEY SIGNUP-------------------");
     const supabase = createClient();
 
     // Check if user is logged in
     const userRes = await supabase.auth.getUser();
 
+    console.log("UserRes: ", userRes);
+
     if (userRes.error) {
+      console.log("UserRes Error: ", userRes.error);
       response = {
         success: false,
         error: userRes.error.message || "Error occured while checking user",
@@ -37,6 +42,7 @@ export async function POST() {
         error: "User not found",
       };
       status = 401;
+      console.log("User not found");
       throw new Error();
     }
 
@@ -51,6 +57,7 @@ export async function POST() {
     console.log("UserPasskeysRes: ", userPassKeysRes);
 
     if (userPassKeysRes.error) {
+      console.log("UserPasskeysRes Error: ", userPassKeysRes.error);
       response = {
         success: false,
         error:
@@ -62,6 +69,7 @@ export async function POST() {
     }
 
     const userPassKeys = userPassKeysRes.data;
+    console.log("UserPasskeys: ", userPassKeys);
 
     // generate excludeCredentials
     const excludedCredentials =
@@ -75,6 +83,7 @@ export async function POST() {
             };
           })
         : [];
+
     console.log("Excluded Credentials: ", excludedCredentials);
 
     const options = await generateRegistrationOptions({
@@ -85,7 +94,11 @@ export async function POST() {
       excludeCredentials: excludedCredentials,
     });
 
+    console.log("Options: ", options);
+
     const challenge = options.challenge;
+
+    console.log("Challenge: ", challenge);
 
     // We store the challenge
     const challengeStorageRes = await supabase.from("challenges").insert({
@@ -93,7 +106,10 @@ export async function POST() {
       challenge: challenge,
     });
 
+    console.log("ChallengeStorageRes: ", challengeStorageRes);
+
     if (challengeStorageRes.error) {
+      console.log("ChallengeStorageRes Error: ", challengeStorageRes.error);
       response = {
         success: false,
         error:
@@ -104,7 +120,9 @@ export async function POST() {
       throw new Error();
     }
 
-    console.log("-----------------PASSKEY SIGNUP COMPLETED-------------------");
+    console.log(
+      "-----------------PASSKEY SIGNUP POST REQUEST COMPLETED-------------------"
+    );
 
     // return the challenge options to the client
     return NextResponse.json({
@@ -113,7 +131,9 @@ export async function POST() {
     });
   } catch (error) {
     console.error("Error in passkey signup: ", error);
-    console.log("-----------------PASSKEY SIGNUP COMPLETED-------------------");
+    console.log(
+      "-----------------PASSKEY SIGNUP POST REQUEST COMPLETED-------------------"
+    );
     return NextResponse.json(response, { status });
   }
 }

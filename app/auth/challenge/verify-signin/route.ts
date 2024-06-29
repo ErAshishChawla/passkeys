@@ -5,7 +5,9 @@ import { createClient } from "@/utils/supabase/server";
 import { verifyAuthenticationResponse } from "@simplewebauthn/server";
 
 export async function POST(req: NextRequest) {
-  console.log("-----------------VERIFY SIGNIN-------------------");
+  console.log(
+    "-----------------VERIFY SIGNIN POST REQUEST STARTED-------------------"
+  );
   let response = {
     success: false,
     error: "An error occured",
@@ -19,7 +21,10 @@ export async function POST(req: NextRequest) {
     const parsedBody = await req.json();
     const incomingCred = parsedBody?.cred;
 
+    console.log("Incoming cred: ", incomingCred);
+
     if (!incomingCred) {
+      console.log("No auth cred found in request body");
       response = {
         success: false,
         error: "No auth cred found in request body",
@@ -30,8 +35,10 @@ export async function POST(req: NextRequest) {
 
     // Check if user is logged in
     const userRes = await supabase.auth.getUser();
+    console.log("UserRes: ", userRes);
 
     if (userRes.error) {
+      console.log("UserRes Error: ", userRes.error);
       response = {
         success: false,
         error: userRes.error.message || "Error occured while checking user",
@@ -43,6 +50,7 @@ export async function POST(req: NextRequest) {
     const user = userRes.data.user;
 
     if (!user) {
+      console.log("User not found");
       response = {
         success: false,
         error: "User not found",
@@ -50,6 +58,8 @@ export async function POST(req: NextRequest) {
       status = 401;
       throw new Error();
     }
+
+    console.log("User: ", user);
 
     // Fetch matching pass key
     const passKeyRes = await supabase
@@ -59,7 +69,10 @@ export async function POST(req: NextRequest) {
       .eq("cred_id", incomingCred.id)
       .maybeSingle();
 
+    console.log("PassKeyRes: ", passKeyRes);
+
     if (passKeyRes.error) {
+      console.log("PassKeyRes Error: ", passKeyRes.error);
       response = {
         success: false,
         error:
@@ -71,6 +84,8 @@ export async function POST(req: NextRequest) {
 
     const passKey = passKeyRes.data;
 
+    console.log("PassKey: ", passKey);
+
     // fetch latest challenge
     const challengeRes = await supabase
       .from("challenges")
@@ -79,6 +94,8 @@ export async function POST(req: NextRequest) {
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
+
+    console.log("ChallengeRes: ", challengeRes);
 
     if (challengeRes.error) {
       response = {
@@ -93,7 +110,10 @@ export async function POST(req: NextRequest) {
 
     const challenge = challengeRes.data?.challenge;
 
+    console.log("Challenge: ", challenge);
+
     if (!challenge) {
+      console.log("No challenge found");
       response = {
         success: false,
         error: "No challenge found",
@@ -120,18 +140,23 @@ export async function POST(req: NextRequest) {
       console.error(error);
       response = {
         success: false,
-        error: error.name,
+        error: error.name || "Error verifying the response",
       };
       status = 400;
       throw new Error();
     }
 
     console.log("Verification: ", verification);
-    console.log("-----------------SIGNIN VERIFIED-------------------");
+
+    console.log(
+      "-----------------VERIFY SIGNIN POST REQUEST COMPLETED-------------------"
+    );
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error(error);
-    console.log("-----------------SIGNIN VERIFIED-------------------");
+    console.log(
+      "-----------------VERIFY SIGNIN POST REQUEST COMPLETED-------------------"
+    );
     return NextResponse.json(response, { status });
   }
 }
