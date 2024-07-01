@@ -78,6 +78,7 @@ export async function POST(req: NextRequest) {
     // Generate authentication options
     const options = await generateAuthenticationOptions({
       rpID: process.env.NEXT_PUBLIC_RP_ID!,
+      userVerification: "preferred",
       // Require users to use a previously-registered authenticator
       allowCredentials: allowedCredentials,
     });

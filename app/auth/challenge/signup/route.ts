@@ -77,6 +77,7 @@ export async function POST() {
         ? userPassKeys.map((passkey) => {
             return {
               id: passkey?.cred_id,
+              type: "public-key",
               transports: (passkey?.transports as string)?.split(
                 ","
               ) as AuthenticatorTransportFuture[],
@@ -90,8 +91,10 @@ export async function POST() {
       rpName: process.env.NEXT_PUBLIC_RP_NAME!,
       rpID: process.env.NEXT_PUBLIC_RP_ID!,
       userName: user.email as string,
+      userID: new TextEncoder().encode(user.id as string),
       attestationType: "none",
       excludeCredentials: excludedCredentials,
+      timeout: 600000,
     });
 
     console.log("Options: ", options);

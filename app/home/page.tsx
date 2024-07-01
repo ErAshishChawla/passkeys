@@ -7,30 +7,29 @@ import {
 } from "@simplewebauthn/browser";
 
 import { Button } from "@/components/ui/button";
+import { createPasskeyRegistrationOptions } from "../actions/passkey-signup";
+import { verifyRegistrationPasskey } from "../actions/passkey-signup-verification";
+import { createPasskeySiginOptions } from "../actions/passkey-signin";
+import { verifySigninPasskey } from "../actions/passkey-signin-verification";
 
 function HomePage() {
-  const onRegisterPassKey = async () => {
+  const handleCreatePasskeySubmit = async (e: any) => {
+    e.preventDefault();
     console.log(
       "--------------On Register Passkey function started-----------------"
     );
     try {
-      const response = await fetch("/auth/challenge/signup", {
-        method: "POST",
-      });
+      const passkeyOptionsRes = await createPasskeyRegistrationOptions();
 
-      console.log("Challenge signup response", response);
+      console.log("passkeyOptionsRes", passkeyOptionsRes);
 
-      const data = await response.json();
-
-      console.log("Challenge signup data", data);
-
-      if (!data?.success) {
+      if (!passkeyOptionsRes?.success) {
         throw new Error(
-          data?.error || "Error occured while creating challenge"
+          passkeyOptionsRes?.error || "Error occured while creating challenge"
         );
       }
 
-      const options = data?.options;
+      const options = passkeyOptionsRes?.options;
 
       console.log("options", options);
 
@@ -53,24 +52,20 @@ function HomePage() {
 
       console.log("sendCredBody", sendCredBody);
 
-      //   Now we need to send the generated public key to the server
-      const verifyCredRes = await fetch("/auth/challenge/verify-signup", {
-        method: "POST",
-        body: JSON.stringify(sendCredBody),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const formData = new FormData();
+      formData.append("cred", JSON.stringify(credRes));
+      formData.append(
+        "options_user",
+        JSON.stringify(options?.user ? options.user : null)
+      );
+
+      const verifyCredRes = await verifyRegistrationPasskey(formData);
 
       console.log("verifyCredRes", verifyCredRes);
 
-      const verifyCredData = await verifyCredRes.json();
-
-      console.log("verifyCredData", verifyCredData);
-
-      if (!verifyCredData?.success) {
+      if (!verifyCredRes?.success) {
         throw new Error(
-          verifyCredData?.error || "Error occured while verifying passkey"
+          verifyCredRes?.error || "Error occured while verifying passkey"
         );
       }
 
@@ -89,23 +84,17 @@ function HomePage() {
       "--------------On Login Passkey function started-----------------"
     );
     try {
-      const response = await fetch("/auth/challenge/signin", {
-        method: "POST",
-      });
+      const signinOptionsRes = await createPasskeySiginOptions();
 
-      console.log("Challenge signin response", response);
+      console.log("signinOptionsRes", signinOptionsRes);
 
-      const data = await response.json();
-
-      console.log("Challenge signin data", data);
-
-      if (!data?.success) {
+      if (!signinOptionsRes?.success) {
         throw new Error(
-          data?.error || "Error occured while creating challenge"
+          signinOptionsRes?.error || "Error occured while creating challenge"
         );
       }
 
-      const options = data?.options;
+      const options = signinOptionsRes?.options;
 
       console.log("options", options);
 
@@ -121,30 +110,17 @@ function HomePage() {
         throw new Error("Error occured while authenticating passkey");
       }
 
-      const sendCredBody = {
-        cred: credRes,
-      };
-
-      console.log("sendCredBody", sendCredBody);
+      const formData = new FormData();
+      formData.append("cred", JSON.stringify(credRes));
 
       // Now we need to send the generated public key to the server
-      const verifyCredRes = await fetch("/auth/challenge/verify-signin", {
-        method: "POST",
-        body: JSON.stringify(sendCredBody),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const verifyCredRes = await verifySigninPasskey(formData);
 
       console.log("verifyCredRes", verifyCredRes);
 
-      const verifyCredData = await verifyCredRes.json();
-
-      console.log("verifyCredData", verifyCredData);
-
-      if (!verifyCredData?.success) {
+      if (!verifyCredRes?.success) {
         throw new Error(
-          verifyCredData?.error || "Error occured while verifying passkey"
+          verifyCredRes?.error || "Error occured while verifying passkey"
         );
       }
 
@@ -158,7 +134,9 @@ function HomePage() {
   };
   return (
     <div className="w-screen h-screen flex flex-col items-center justify-center gap-3">
-      <Button onClick={onRegisterPassKey}>Create Passkey</Button>
+      <form onSubmit={handleCreatePasskeySubmit}>
+        <Button type="submit">Create Passkey</Button>
+      </form>
       <Button onClick={onLoginPassKey}>Login with passkey Passkey</Button>
     </div>
   );
